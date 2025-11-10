@@ -1,17 +1,17 @@
-name: Python CI Pipeline
+name: Python CI + Sécurité
 
 on:
-  push:                # Déclenche la pipeline à chaque push
+  push:
     branches: [ main ]
-  pull_request:        # Et aussi pour les pull requests
+  pull_request:
     branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Machine virtuelle Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Cloner le dépôt GitHub
+      # 1️⃣ Cloner le dépôt
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'  # tu peux mettre 3.9, 3.10, etc.
+          python-version: '3.11'
 
       # 3️⃣ Installer les dépendances du projet
       - name: Install dependencies
@@ -32,8 +32,14 @@ jobs:
         run: |
           if [ -d tests ]; then pytest -v; else echo "Aucun dossier de tests trouvé"; fi
 
-      # 5️⃣ (Optionnel) Vérifier la qualité du code
-      - name: Lint code
+      # 5️⃣ Vérifier la qualité du code (Lint)
+      - name: Lint with flake8
         run: |
           pip install flake8
           flake8 . --max-line-length=88
+
+      # 6️⃣ Analyse de sécurité avec Bandit
+      - name: Security scan with Bandit
+        run: |
+          pip install bandit
+          bandit -r . -ll
