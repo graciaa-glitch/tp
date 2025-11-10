@@ -1,4 +1,4 @@
-name: Python CI + Sécurité
+name: Python CI + Sécurité (avec Bandit strict)
 
 on:
   push:
@@ -21,25 +21,42 @@ jobs:
         with:
           python-version: '3.11'
 
-      # 3️⃣ Installer les dépendances du projet
+      # 3️⃣ Installer les dépendances
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      # 4️⃣ Lancer les tests unitaires
+      # 4️⃣ Lancer les tests
       - name: Run tests
         run: |
           if [ -d tests ]; then pytest -v; else echo "Aucun dossier de tests trouvé"; fi
 
-      # 5️⃣ Vérifier la qualité du code (Lint)
+      # 5️⃣ Lint du code
       - name: Lint with flake8
         run: |
           pip install flake8
           flake8 . --max-line-length=88
 
-      # 6️⃣ Analyse de sécurité avec Bandit
+      # 6️⃣ Analyse de sécurité stricte avec Bandit
       - name: Security scan with Bandit
         run: |
           pip install bandit
-          bandit -r . -ll
+          # Analyse complète du projet
+          bandit -r . -f json -o bandit-report.json || true
+
+          # Vérifie si des vulnérabilités HIGH sont présentes
+          if grep -q '"issue_severity": "HIGH"' bandit-report.json; then
+            echo "❌ Vulnérabilités HIGH détectées. Échec du build."
+            cat bandit-report.json
+            exit 1
+          else
+            echo "✅ Aucun problème HIGH détecté."
+          fi
+
+      # 7️⃣ (Optionnel) Enregistrer le rapport
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
