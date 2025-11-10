@@ -1,0 +1,39 @@
+name: Python CI Pipeline
+
+on:
+  push:                # Déclenche la pipeline à chaque push
+    branches: [ main ]
+  pull_request:        # Et aussi pour les pull requests
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Machine virtuelle Ubuntu
+
+    steps:
+      # 1️⃣ Cloner le dépôt GitHub
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Installer Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'  # tu peux mettre 3.9, 3.10, etc.
+
+      # 3️⃣ Installer les dépendances du projet
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # 4️⃣ Lancer les tests unitaires
+      - name: Run tests
+        run: |
+          if [ -d tests ]; then pytest -v; else echo "Aucun dossier de tests trouvé"; fi
+
+      # 5️⃣ (Optionnel) Vérifier la qualité du code
+      - name: Lint code
+        run: |
+          pip install flake8
+          flake8 . --max-line-length=88
